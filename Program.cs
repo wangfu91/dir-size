@@ -45,7 +45,7 @@ namespace FolderSize
                 if (!Directory.Exists(dir)) return 0L;
 
                 var dirSize = 0L;
-                foreach (var file in Directory.GetFiles(dir, "*"))
+                foreach (var file in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
                 {
                     dirSize += new FileInfo(file).Length;
                 }
@@ -54,7 +54,7 @@ namespace FolderSize
             }
             catch
             {
-                return -1;
+                return -1;                
             }
         }
 
@@ -62,7 +62,7 @@ namespace FolderSize
         {
             var dirName = Path.GetFileName(dir);
             Console.WriteLine("{0,-30} {1,5}", dirName,
-            size > 0
+            size >= 0
             ? size.Bytes().ToString("#.#")
             : "N/A");
         }
