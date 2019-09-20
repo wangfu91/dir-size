@@ -1,7 +1,7 @@
 # dir-size
 dotnet global tool to list dir with size.
 
-# Install
+## Install:
 
 ```powershell
 > dotnet tool install --global dir-size
