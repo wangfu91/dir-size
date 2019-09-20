@@ -9,6 +9,10 @@ dotnet global tool to list dir with size.
 
 ## Usage:
 
-```> dir-size```
+```powershell
+> dir-size
+```
 
-```> dir-size -d path/to/dir```
+```powershell
+> dir-size -d path/to/dir
+```
