@@ -3,4 +3,5 @@ nupkg
 obj
 .vs
 .vscode
+*.user
 
