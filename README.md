@@ -1,5 +1,5 @@
 # dir-size
-dotnet global tool to list dir with size.
+A simple dotnet global tool to display the size of each sub-dir.
 
 ## Install:
 
