@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Enumeration;
 using System.Linq;
@@ -20,10 +19,11 @@ namespace DirSize
         [Option(Description = "The directory to calculate size", ShortName = "d")]
         public static string WorkingDirectory { get; set; }
 
+        [Option(Description = "If sorted by size", ShortName = "s")]
+        public static bool ShouldSort { get; set; }
+
         private void OnExecute()
         {
-            var sw = Stopwatch.StartNew();
-
             try
             {
                 if (string.IsNullOrEmpty(WorkingDirectory))
@@ -31,12 +31,44 @@ namespace DirSize
                     WorkingDirectory = Directory.GetCurrentDirectory();
                 }
 
-                Parallel.ForEach(EnumerateTopLevelDirectories(WorkingDirectory),
-                    subDir => { Print(subDir, CalculateDirSize(subDir)); }
+                var nameSizeList = new List<(string name, long size)>();
+
+                if (ShouldSort)
+                {
+                    Console.Write("\rScanning...");
+                }
+
+                Parallel.ForEach(
+                    EnumerateTopLevelDirectories(WorkingDirectory),
+                    () => new List<(string dirName, long size)>(),
+                    (subDir, loopState, local) =>
+                    {
+                        var dirName = Path.GetFileName(subDir);
+                        var size = CalculateDirSize(subDir);
+
+                        if (!ShouldSort)
+                            PrintSingle(dirName, size);
+
+                        local.Add((dirName, size));
+                        return local;
+                    },
+                    local =>
+                    {
+                        if (!local.Any()) return;
+
+                        lock (nameSizeList)
+                        {
+                            nameSizeList.AddRange(local);
+                        }
+                    }
                 );
 
-                var elapsed = sw.ElapsedMilliseconds;
-                Console.Out.WriteLine($"---------- Finished in {elapsed} ms ----------");
+                if (ShouldSort)
+                {
+                    nameSizeList.Sort((x, y) => y.size.CompareTo(x.size));
+                    Console.Write("\r");
+                    PrintAll(nameSizeList);
+                }
             }
             catch (Exception ex)
             {
@@ -83,11 +115,18 @@ namespace DirSize
             }
         }
 
-        private static void Print(string dir, long size)
+        private static void PrintSingle(string dirName, long size)
         {
-            var dirName = Path.GetFileName(dir);
             Console.WriteLine(
                 $"{dirName,-50} {(size >= 0 ? size.Bytes().ToString("#.#") : "N/A"),-10}");
+        }
+
+        private static void PrintAll(IEnumerable<(string dirName, long size)> list)
+        {
+            foreach (var (dirName, size) in list)
+            {
+                PrintSingle(dirName, size);
+            }
         }
     }
 }

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "dir-size": {
+      "commandName": "Project",
+      "commandLineArgs": "-d C:\\Users\\Frank\\source\\github"
+    }
+  }
+}
