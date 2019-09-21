@@ -1,11 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>dir-size</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
+    <Version>1.0.2</Version>
+    <Optimize>true</Optimize>
+    <Authors>Fu Wang</Authors>
+    <RepositoryUrl>https://github.com/wangfu91/dir-size.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>A simple dotnet global tool to display the size of each sub-dir</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,8 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.4.0" />
-    <PackageReference Include="Humanizer" Version="2.7.2" />
+    <PackageReference Include="Humanizer.Core" Version="2.7.2" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.4.1" />
   </ItemGroup>
 
   <ItemGroup>
