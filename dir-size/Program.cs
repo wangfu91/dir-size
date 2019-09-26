@@ -65,7 +65,7 @@ namespace DirSize
 
                 if (Sort)
                 {
-                    nameSizeList.Sort((x, y) => y.size.CompareTo(x.size));
+                    nameSizeList.Sort((x, y) => x.size.CompareTo(y.size));
                     Console.Write("\r");
                     PrintAll(nameSizeList);
                 }
