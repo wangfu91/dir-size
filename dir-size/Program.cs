@@ -16,37 +16,37 @@ namespace DirSize
             CommandLineApplication.Execute<Program>(args);
         }
 
-        [Option(Description = "The directory to calculate size", ShortName = "d")]
-        public static string WorkingDirectory { get; set; }
+        [Option(Description = "The directory to working with", ShortName = "d")]
+        public static string WorkingDir { get; set; }
 
-        [Option(Description = "If sorted by size", ShortName = "s")]
-        public static bool ShouldSort { get; set; }
+        [Option(Description = "Sort by size", ShortName = "s")]
+        public static bool Sort { get; set; }
 
         private void OnExecute()
         {
             try
             {
-                if (string.IsNullOrEmpty(WorkingDirectory))
+                if (string.IsNullOrEmpty(WorkingDir))
                 {
-                    WorkingDirectory = Directory.GetCurrentDirectory();
+                    WorkingDir = Directory.GetCurrentDirectory();
                 }
 
                 var nameSizeList = new List<(string name, long size)>();
 
-                if (ShouldSort)
+                if (Sort)
                 {
                     Console.Write("\rScanning...");
                 }
 
                 Parallel.ForEach(
-                    EnumerateTopLevelDirectories(WorkingDirectory),
+                    EnumerateTopLevelDirectories(WorkingDir),
                     () => new List<(string dirName, long size)>(),
                     (subDir, loopState, local) =>
                     {
                         var dirName = Path.GetFileName(subDir);
                         var size = CalculateDirSize(subDir);
 
-                        if (!ShouldSort)
+                        if (!Sort)
                             PrintSingle(dirName, size);
 
                         local.Add((dirName, size));
@@ -63,7 +63,7 @@ namespace DirSize
                     }
                 );
 
-                if (ShouldSort)
+                if (Sort)
                 {
                     nameSizeList.Sort((x, y) => y.size.CompareTo(x.size));
                     Console.Write("\r");
@@ -94,25 +94,23 @@ namespace DirSize
 
         private static long CalculateDirSize(string dir)
         {
-            try
-            {
-                if (!Directory.Exists(dir)) return 0L;
+            if (!Directory.Exists(dir)) return 0L;
 
-                return new FileSystemEnumerable<long>(
-                    dir,
-                    (ref FileSystemEntry entry) => entry.Length,
-                    new EnumerationOptions
-                    {
-                        RecurseSubdirectories = true
-                    })
+            // https://blogs.msdn.microsoft.com/jeremykuhne/2018/03/09/custom-directory-enumeration-in-net-core-2-1/
+            return new FileSystemEnumerable<long>(
+                dir,
+                (ref FileSystemEntry entry) => entry.Length,
+                new EnumerationOptions
                 {
-                    ShouldIncludePredicate = (ref FileSystemEntry entry) => !entry.IsDirectory
-                }.Sum();
-            }
-            catch
+                    RecurseSubdirectories = true,
+                    AttributesToSkip = FileAttributes.ReparsePoint, //Avoiding infinite loop
+                    IgnoreInaccessible = true,
+                    MatchCasing = MatchCasing.PlatformDefault,
+                    ReturnSpecialDirectories = false
+                })
             {
-                return -1;
-            }
+                ShouldIncludePredicate = (ref FileSystemEntry entry) => !entry.IsDirectory
+            }.Sum();
         }
 
         private static void PrintSingle(string dirName, long size)
