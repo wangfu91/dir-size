@@ -3,16 +3,21 @@ A simple dotnet global tool to display the size of each sub-dir.
 
 ## Install:
 
-```powershell
-> dotnet tool install --global dir-size
+```bash
+dotnet tool install --global dir-size
 ```
 
 ## Usage:
 
-```powershell
-> dir-size
+Current directory:
+```bash
+dir-size
 ```
-
-```powershell
-> dir-size -d path/to/dir
+Specify the target directory
+```bash
+dir-size -d path/to/dir
+```
+Sort by size:
+```bash
+dir-size -s
 ```
