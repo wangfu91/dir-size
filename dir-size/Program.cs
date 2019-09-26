@@ -85,7 +85,11 @@ namespace DirSize
                 (ref FileSystemEntry entry) => entry.ToFullPath(),
                 new EnumerationOptions
                 {
-                    RecurseSubdirectories = false
+                    RecurseSubdirectories = false,
+                    AttributesToSkip = FileAttributes.ReparsePoint, //Avoiding infinite loop
+                    IgnoreInaccessible = true,
+                    MatchCasing = MatchCasing.PlatformDefault,
+                    ReturnSpecialDirectories = false
                 })
             {
                 ShouldIncludePredicate = (ref FileSystemEntry entry) => entry.IsDirectory
