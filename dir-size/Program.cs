@@ -6,21 +6,26 @@ using System.Linq;
 using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
 using Humanizer;
+using System.Threading;
 
 namespace DirSize
 {
     internal class Program
     {
-        public static void Main(string[] args)
-        {
-            CommandLineApplication.Execute<Program>(args);
-        }
+        private static readonly CancellationTokenSource cts = new CancellationTokenSource();
 
         [Option(Description = "The directory to working with", ShortName = "d")]
         public static string WorkingDir { get; set; }
 
         [Option(Description = "Sort by size", ShortName = "s")]
         public static bool Sort { get; set; }
+
+
+        public static void Main(string[] args)
+        {
+            Console.CancelKeyPress += Console_CancelKeyPress;
+            CommandLineApplication.Execute<Program>(args);
+        }
 
         private void OnExecute()
         {
@@ -35,11 +40,18 @@ namespace DirSize
 
                 if (Sort)
                 {
-                    Console.Write("\rScanning...");
+                    Console.Write("Scanning...");
                 }
+
+                var options = new ParallelOptions
+                {
+                    CancellationToken = cts.Token,
+                    MaxDegreeOfParallelism = Environment.ProcessorCount
+                };
 
                 Parallel.ForEach(
                     EnumerateTopLevelDirectories(WorkingDir),
+                    options,
                     () => new List<(string dirName, long size)>(),
                     (subDir, loopState, local) =>
                     {
@@ -69,6 +81,10 @@ namespace DirSize
                     Console.Write("\r");
                     PrintAll(nameSizeList);
                 }
+            }
+            catch (OperationCanceledException ex)
+            {
+                Console.WriteLine(Environment.NewLine + ex.Message);
             }
             catch (Exception ex)
             {
@@ -128,6 +144,14 @@ namespace DirSize
             foreach (var (dirName, size) in list)
             {
                 PrintSingle(dirName, size);
+            }
+        }
+
+        private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        {
+            if (!cts.IsCancellationRequested)
+            {
+                cts.Cancel();
             }
         }
     }
