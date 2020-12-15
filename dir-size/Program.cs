@@ -21,10 +21,10 @@ namespace DirSize
         private static readonly IReporter Reporter = new ConsoleReporter(PhysicalConsole.Singleton);
         private static readonly CancellationTokenSource cts = new();
 
-        [Option(Description = "The directory to work with", ShortName = "d")]
+        [Option("-d|--dir", Description = "The directory to work with, default is the current dir")]
         public static string WorkingDir { get; set; } = Directory.GetCurrentDirectory();
 
-        [Option(Description = "Sort by size", ShortName = "s")]
+        [Option("-s|--sort", Description = "Sort by size")]
         public static bool Sort { get; set; }
 
         public static void Main(string[] args)
