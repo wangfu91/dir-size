@@ -1,7 +1,8 @@
 {
   "profiles": {
     "dir-size": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "-h"
     }
   }
 }
