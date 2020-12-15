@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Enumeration;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
 using Humanizer;
@@ -10,16 +11,21 @@ using System.Threading;
 
 namespace DirSize
 {
+    [Command(
+        Name = "dir-size",
+        Description = "A simple dotnet global tool to calculate the size of each sub-dir.")]
+    [HelpOption("-?|-h|--help")]
+    [VersionOptionFromMember(Template = "-v|--version", MemberName = nameof(GetVersion))]
     internal class Program
     {
-        private static readonly CancellationTokenSource cts = new CancellationTokenSource();
+        private static readonly IReporter Reporter = new ConsoleReporter(PhysicalConsole.Singleton);
+        private static readonly CancellationTokenSource cts = new();
 
-        [Option(Description = "The directory to working with", ShortName = "d")]
-        public static string WorkingDir { get; set; }
+        [Option(Description = "The directory to work with", ShortName = "d")]
+        public static string WorkingDir { get; set; } = Directory.GetCurrentDirectory();
 
         [Option(Description = "Sort by size", ShortName = "s")]
         public static bool Sort { get; set; }
-
 
         public static void Main(string[] args)
         {
@@ -31,11 +37,6 @@ namespace DirSize
         {
             try
             {
-                if (string.IsNullOrEmpty(WorkingDir))
-                {
-                    WorkingDir = Directory.GetCurrentDirectory();
-                }
-
                 var nameSizeList = new List<(string name, long size)>();
 
                 if (Sort)
@@ -53,7 +54,7 @@ namespace DirSize
                     EnumerateTopLevelDirectories(WorkingDir),
                     options,
                     () => new List<(string dirName, long size)>(),
-                    (subDir, loopState, local) =>
+                    (subDir, _, local) =>
                     {
                         var dirName = Path.GetFileName(subDir);
                         var size = CalculateDirSize(subDir);
@@ -84,13 +85,11 @@ namespace DirSize
             }
             catch (OperationCanceledException ex)
             {
-                Console.WriteLine(Environment.NewLine + ex.Message);
+                Reporter.Warn(Environment.NewLine + ex.Message);
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.Error.WriteLine("Unexpected error: " + ex);
-                Console.ResetColor();
+                Reporter.Error("Unexpected error: " + ex);
             }
         }
 
@@ -135,8 +134,7 @@ namespace DirSize
 
         private static void PrintSingle(string dirName, long size)
         {
-            Console.WriteLine(
-                $"{dirName,-50} {(size >= 0 ? size.Bytes().ToString("#.#") : "N/A"),-10}");
+            Reporter.Output($"{dirName,-50} {(size >= 0 ? size.Bytes().ToString("#.#") : "N/A"),-10}");
         }
 
         private static void PrintAll(IEnumerable<(string dirName, long size)> list)
@@ -147,12 +145,17 @@ namespace DirSize
             }
         }
 
-        private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        private static void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
         {
             if (!cts.IsCancellationRequested)
             {
                 cts.Cancel();
             }
+        }
+
+        private static string? GetVersion()
+        {
+            return Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         }
     }
 }
